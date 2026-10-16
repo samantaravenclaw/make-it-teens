@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Распределение по факультетам</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .app-page { min-height:100vh; padding:120px 16px 48px; }
+    .app-shell { width:min(100%, 420px); margin:0 auto; }
+    .app-back { display:inline-block; margin-bottom:18px; }
+    .app-shell .contact-grid { display:block; }
+    .app-shell .contact-form { margin-top:22px; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="index.html" aria-label="На главную">К<span class="logo-eagle-slot">О</span>ГТЕ<span>ВРАН</span></a>
+      <a class="button button-small" href="index.html">На сайт</a>
+    </div>
+  </header>
+  <main class="app-page">
+    <div class="app-shell">
+      <a class="text-link app-back" href="index.html">← Вернуться на сайт</a>
+      <section class="section contact" aria-labelledby="contact-title">
+        <div class="contact-grid">
+          <div><p class="eyebrow">ШЛЯПА ЖДЁТ</p><h1 id="contact-title">Куда тебя распределит Шляпа?</h1><p class="contact-note">Ответь на восемь вопросов, выбирая по одному варианту в каждом.</p><p class="quiz-note">Это развлекательный тест: ответы никуда не отправляются.</p></div>
+          <form class="contact-form" id="contact-form">
+            <fieldset class="quiz-question"><legend>1. В старой библиотеке ты находишь запертую дверь. Что делаешь?</legend>
+              <label class="quiz-answer"><input type="radio" name="q1" value="gryffindor" required><span>Смело пробую открыть её, даже если неизвестно, что за ней.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q1" value="hufflepuff"><span>Ищу смотрителя и сначала выясняю, не нужна ли ему помощь.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q1" value="ravenclaw"><span>Изучаю замок, надписи и возможные загадки.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q1" value="slytherin"><span>Продумываю, как открыть её с наибольшей выгодой для себя.</span></label>
+            </fieldset>
+            <fieldset class="quiz-question"><legend>2. Что для тебя важнее всего в командной работе?</legend>
+              <label class="quiz-answer"><input type="radio" name="q2" value="gryffindor" required><span>Не отступать перед трудной задачей.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q2" value="hufflepuff"><span>Поддерживать друг друга и честно делить работу.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q2" value="ravenclaw"><span>Обмениваться идеями и находить необычные решения.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q2" value="slytherin"><span>Поставить ясную цель и привести команду к результату.</span></label>
+            </fieldset>
+            <fieldset class="quiz-question"><legend>3. Какой предмет ты выберешь для изучения?</legend>
+              <label class="quiz-answer"><input type="radio" name="q3" value="gryffindor" required><span>Защиту от тёмных искусств.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q3" value="hufflepuff"><span>Травологию.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q3" value="ravenclaw"><span>Заклинания.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q3" value="slytherin"><span>Зельеварение.</span></label>
+            </fieldset>
+            <fieldset class="quiz-question"><legend>4. Как ты обычно принимаешь важное решение?</legend>
+              <label class="quiz-answer"><input type="radio" name="q4" value="gryffindor" required><span>Слушаю смелость внутри.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q4" value="hufflepuff"><span>Думаю, как решение повлияет на близких.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q4" value="ravenclaw"><span>Собираю факты и рассматриваю варианты.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q4" value="slytherin"><span>Выбираю самый эффективный путь.</span></label>
+            </fieldset>
+            <fieldset class="quiz-question"><legend>5. Ваша группа сбилась с пути. Твой первый шаг?</legend>
+              <label class="quiz-answer"><input type="radio" name="q5" value="gryffindor" required><span>Разведать дорогу впереди.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q5" value="hufflepuff"><span>Проверить, все ли в порядке.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q5" value="ravenclaw"><span>Сверить карту и приметы.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q5" value="slytherin"><span>Найти кратчайший безопасный путь.</span></label>
+            </fieldset>
+            <fieldset class="quiz-question"><legend>6. Какой вечер в Хогвартсе тебе ближе?</legend>
+              <label class="quiz-answer"><input type="radio" name="q6" value="gryffindor" required><span>Тренировка перед испытанием.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q6" value="hufflepuff"><span>Встреча с друзьями за чаем.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q6" value="ravenclaw"><span>Чтение книги.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q6" value="slytherin"><span>Работа над личным проектом.</span></label>
+            </fieldset>
+            <fieldset class="quiz-question"><legend>7. Какое качество ты больше всего ценишь в друге?</legend>
+              <label class="quiz-answer"><input type="radio" name="q7" value="gryffindor" required><span>Смелость.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q7" value="hufflepuff"><span>Надёжность.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q7" value="ravenclaw"><span>Любознательность.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q7" value="slytherin"><span>Целеустремлённость.</span></label>
+            </fieldset>
+            <fieldset class="quiz-question"><legend>8. Перед сложным испытанием ты скорее…</legend>
+              <label class="quiz-answer"><input type="radio" name="q8" value="gryffindor" required><span>Сделаешь шаг вперёд.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q8" value="hufflepuff"><span>Подготовишься с товарищами.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q8" value="ravenclaw"><span>Изучишь правила.</span></label>
+              <label class="quiz-answer"><input type="radio" name="q8" value="slytherin"><span>Составишь чёткий план.</span></label>
+            </fieldset>
+            <button class="button" type="submit">Узнать свой факультет <span aria-hidden="true">→</span></button>
+            <div class="form-message" id="form-message" aria-live="polite" hidden></div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
