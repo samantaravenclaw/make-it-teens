@@ -72,6 +72,8 @@
       pointer-events: none;
       filter: drop-shadow(0 10px 8px #0007);
       z-index: 2;
+      will-change: bottom, transform;
+      transition: transform 120ms ease-out;
     }
     .hero.flying {
       width: 10.15%;
@@ -365,6 +367,7 @@
     const x = 0.18;
     let y = 0;
     let velocityY = 0;
+    const maxFlightHeight = 0.34;
     let facing = 1;
     let flapFrame = 0;
     let lastFrameChange = 0;
@@ -723,8 +726,8 @@
     }
 
     function flap(now) {
-      if (now - lastLift < 170) return;
-      velocityY = Math.min(velocityY + 0.013, 0.021);
+      if (now - lastLift < 120) return;
+      velocityY = Math.min(velocityY + 0.0055, 0.011);
       lastLift = now;
     }
 
@@ -754,6 +757,7 @@
 
     function frame(now) {
       const delta = previousFrameTime ? Math.min(50, now - previousFrameTime) : 0;
+      const frameScale = delta ? delta / (1000 / 60) : 1;
       previousFrameTime = now;
       if (dead || paused || landing) {
         requestAnimationFrame(frame);
@@ -768,13 +772,13 @@
       if (pressed.has('arrowup') || pressed.has(' ')) flap(now);
 
       const fastDescent = pressed.has('arrowdown');
-      velocityY -= fastDescent ? 0.0014 : 0.00062;
-      const fallLimit = fastDescent ? -0.012 : -0.0045;
+      velocityY -= (fastDescent ? 0.00075 : 0.00028) * frameScale;
+      const fallLimit = fastDescent ? -0.008 : -0.0034;
       if (y > 0 && velocityY < fallLimit) velocityY = fallLimit;
-      y += velocityY;
+      y += velocityY * frameScale;
       if (y < 0) { y = 0; velocityY = 0; }
-      if (y > 0.72) {
-        y = 0.72;
+      if (y > maxFlightHeight) {
+        y = maxFlightHeight;
         if (velocityY > 0) velocityY = 0;
       }
 
