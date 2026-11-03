@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Путешествие Совеллы</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #0c1830;
+      color: white;
+      font-family: system-ui, sans-serif;
+    }
+    .game { position: relative; width: 100vw; height: 100vh; text-align: center; }
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border: 0;
+      border-radius: 0;
+      background: #102340;
+      box-shadow: 0 20px 60px #0009;
+    }
+    .scene {
+      position: absolute;
+      inset: 0;
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      opacity: 0;
+      transform: scale(1.015);
+      transition: opacity 8s ease-in-out;
+    }
+    .scene.active { opacity: 1; }
+    .parallax {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background-repeat: repeat-x;
+      background-position-y: bottom;
+    }
+    .parallax.far {
+      opacity: .32;
+      background-size: 760px 210px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='760' height='210' viewBox='0 0 760 210'%3E%3Cpath fill='%238bb4d5' d='M0 210V165L90 92l72 66L285 45l104 112L500 72l95 86L688 58l72 91v61Z'/%3E%3C/svg%3E");
+    }
+    .parallax.mid {
+      opacity: .42;
+      background-size: 560px 185px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='185' viewBox='0 0 560 185'%3E%3Cg fill='%23225358'%3E%3Cpath d='M0 185h560v-28H0z'/%3E%3Cpath d='m25 162 38-105 38 105zm95 0 31-82 31 82zm70 0 43-125 43 125zm120 0 34-92 34 92zm78 0 45-132 45 132zm105 0 30-85 30 85z'/%3E%3C/g%3E%3C/svg%3E");
+    }
+    .parallax.near {
+      opacity: .96;
+      background-size: auto 62%;
+      background-image: url("parallax-trees.png");
+    }
+    .hero {
+      position: absolute;
+      left: 4%;
+      bottom: 3%;
+      width: 5.25%;
+      max-height: 14.7%;
+      object-fit: contain;
+      transform-origin: center bottom;
+      user-select: none;
+      pointer-events: none;
+      filter: drop-shadow(0 10px 8px #0007);
+      z-index: 2;
+    }
+    .hero.flying {
+      width: 10.15%;
+      max-height: 16.8%;
+    }
+    .place-name {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: #071325b8;
+      font-weight: 800;
+      letter-spacing: .04em;
+      z-index: 3;
+    }
+    .hud {
+      position: absolute;
+      inset: 14px 14px auto 14px;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+    .health-card, .letter-count {
+      padding: 8px 12px;
+      border-radius: 14px;
+      background: #071325c9;
+      border: 2px solid #ffffff66;
+      font-weight: 800;
+      text-shadow: 0 2px 3px #000;
+    }
+    .health-card { width: min(34%, 260px); text-align: left; }
+    .health-row { display: flex; justify-content: space-between; gap: 8px; }
+    .health-shell {
+      height: 14px;
+      margin-top: 6px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #2c1520;
+      border: 1px solid #ffffff88;
+    }
+    .health-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #43d17b, #b9f35d);
+      transition: width .35s ease, background .35s ease;
+    }
+    .entity {
+      position: absolute;
+      z-index: 2;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      user-select: none;
+    }
+    .letter {
+      width: clamp(42px, 6vw, 72px);
+      aspect-ratio: 1.5;
+      background: center / contain no-repeat url("letter.png");
+      filter: drop-shadow(0 5px 6px #0008);
+    }
+    .letter.dropped { filter: drop-shadow(0 0 8px #7ed8ff); }
+    .predator {
+      width: clamp(66px, 11vw, 128px);
+      aspect-ratio: 1.5;
+      background: center / contain no-repeat url("predator.png");
+      filter: brightness(1.35) saturate(1.2) contrast(1.08)
+              drop-shadow(0 0 4px #d9ecffcc) drop-shadow(0 7px 6px #0009);
+    }
+    .storm-cloud {
+      width: clamp(90px, 16vw, 180px);
+      aspect-ratio: 1.5;
+      background: center / contain no-repeat url("storm-cloud.png");
+      filter: brightness(1.3) saturate(1.3) contrast(1.08)
+              drop-shadow(0 0 6px #bde9ffff) drop-shadow(0 8px 9px #000b);
+    }
+    .delivery {
+      width: clamp(150px, 18vw, 340px);
+      height: 94%;
+      background: center bottom / contain no-repeat url("post-tower-v2.png");
+      filter: drop-shadow(0 10px 10px #0009);
+    }
+    .landing-zone {
+      position: absolute;
+      left: 1%;
+      top: 58%;
+      width: 38%;
+      height: 5.5%;
+      border-radius: 999px;
+      background: #ffe78a22;
+      box-shadow: 0 0 13px 5px #ffe78a77;
+      animation: landing-glow 1s ease-in-out infinite alternate;
+    }
+    @keyframes landing-glow { to { box-shadow: 0 0 20px 8px #ffe78aaa; } }
+    .hero.landing {
+      animation: owl-landing .8s ease-out both;
+    }
+    @keyframes owl-landing {
+      0% { transform: scaleX(1) rotate(9deg) translateY(-14px); }
+      55% { transform: scaleX(1) rotate(-3deg) translateY(4px); }
+      78% { transform: scaleX(1) rotate(2deg) translateY(-2px); }
+      100% { transform: scaleX(1) rotate(0deg) translateY(0); }
+    }
+    .lightning-flash {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      pointer-events: none;
+      opacity: 0;
+      background: #eaf7ff;
+    }
+    .lightning-flash.hit { animation: lightning-hit .45s ease-out; }
+    @keyframes lightning-hit { 0%, 35% { opacity: .9; } 18%, 60% { opacity: .15; } 100% { opacity: 0; } }
+    .toast {
+      position: absolute;
+      z-index: 7;
+      left: 50%;
+      bottom: 9%;
+      transform: translateX(-50%);
+      max-width: 80%;
+      padding: 9px 16px;
+      border-radius: 999px;
+      background: #071325dc;
+      font-weight: 800;
+      opacity: 0;
+      transition: opacity .2s ease;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+    .death-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      place-items: center;
+      background: #071325d9;
+      text-align: center;
+      font-size: clamp(24px, 5vw, 52px);
+      font-weight: 900;
+      text-shadow: 0 4px 8px #000;
+    }
+    .death-screen.show { display: grid; }
+    .death-screen small { display: block; margin-top: 12px; font-size: .42em; }
+    .pause-button {
+      position: absolute;
+      right: 14px;
+      bottom: 14px;
+      z-index: 11;
+      padding: 9px 15px;
+      border: 2px solid #ffffff99;
+      border-radius: 999px;
+      background: #071325d9;
+      color: white;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .pause-button:hover { background: #17345e; }
+    .pause-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 9;
+      display: none;
+      place-items: center;
+      background: #07132599;
+      font-size: clamp(32px, 7vw, 72px);
+      font-weight: 900;
+      text-shadow: 0 4px 8px #000;
+      pointer-events: none;
+    }
+    .pause-screen.show { display: grid; }
+    .record {
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      z-index: 5;
+      padding: 8px 12px;
+      border: 2px solid #ffffff66;
+      border-radius: 999px;
+      background: #071325c9;
+      font-weight: 800;
+      text-shadow: 0 2px 3px #000;
+      pointer-events: none;
+    }
+    .mission {
+      position: absolute;
+      left: 50%;
+      top: 58px;
+      z-index: 5;
+      transform: translateX(-50%);
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #071325c9;
+      border: 2px solid #f2c14eaa;
+      font-weight: 800;
+      text-shadow: 0 2px 3px #000;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .hint {
+      position: absolute;
+      left: 50%;
+      bottom: 14px;
+      z-index: 12;
+      transform: translateX(-50%);
+      margin: 0;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: #071325c9;
+      font-size: clamp(14px, 1.7vw, 20px);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <section class="stage" id="stage" aria-label="Игровое поле">
+      <div class="scene active" id="sceneA"></div>
+      <div class="scene" id="sceneB"></div>
+      <div class="parallax far" id="parallaxFar"></div>
+      <div class="parallax mid" id="parallaxMid"></div>
+      <div class="parallax near" id="parallaxNear"></div>
+      <div class="place-name" id="placeName">День</div>
+      <div class="hud">
+        <div class="health-card">
+          <div class="health-row"><span>Здоровье</span><span id="healthText">10 / 10</span></div>
+          <div class="health-shell"><div class="health-fill" id="healthFill"></div></div>
+        </div>
+        <div class="letter-count" id="letterCount">✉ Письма: 0</div>
+      </div>
+      <div class="mission" id="mission">Цель: собери 3 письма</div>
+      <img class="hero" id="hero" src="hero.png" alt="Совелла">
+      <div class="lightning-flash" id="lightningFlash"></div>
+      <div class="toast" id="toast"></div>
+      <div class="death-screen" id="deathScreen">
+        <div>Вы проиграли<small>Начните заново, чтобы отыграться — нажмите R</small></div>
+      </div>
+      <div class="pause-screen" id="pauseScreen">Пауза</div>
+      <button class="pause-button" id="pauseButton" type="button">⏸ Пауза</button>
+      <div class="record" id="record">🏆 Рекорд: 0</div>
+    </section>
+    <p class="hint">↑ / пробел — взмах, ↓ — снижаться</p>
+  </main>
+  <script>
+    const stage = document.querySelector('#stage');
+    const hero = document.querySelector('#hero');
+    const placeName = document.querySelector('#placeName');
+    const healthFill = document.querySelector('#healthFill');
+    const healthText = document.querySelector('#healthText');
+    const letterCount = document.querySelector('#letterCount');
+    const lightningFlash = document.querySelector('#lightningFlash');
+    const toast = document.querySelector('#toast');
+    const deathScreen = document.querySelector('#deathScreen');
+    const pauseScreen = document.querySelector('#pauseScreen');
+    const pauseButton = document.querySelector('#pauseButton');
+    const record = document.querySelector('#record');
+    const mission = document.querySelector('#mission');
+    const scenes = [document.querySelector('#sceneA'), document.querySelector('#sceneB')];
+    const parallaxLayers = [
+      document.querySelector('#parallaxFar'),
+      document.querySelector('#parallaxMid'),
+      document.querySelector('#parallaxNear')
+    ];
+    const places = [
+      { image: 'place-1.png', name: 'День' },
+      { image: 'place-2.png', name: 'Ночь' },
+      { image: 'place-3.png', name: 'Гроза' }
+    ];
+    const dayCycle = [0, 1, 0, 1, 2];
+    const flapFrames = [
+      'fly-1.png',
+      'fly-2.png',
+      'fly-3.png',
+      'fly-4.png',
+      'fly-5.png',
+      'fly-4.png',
+      'fly-3.png',
+      'fly-2.png'
+    ];
+    [...flapFrames, 'glide.png', 'hero.png'].forEach(src => {
+      const image = new Image();
+      image.src = src;
+    });
+
+    let place = 0;
+    let cycleStep = 0;
+    let activeScene = 0;
+    const x = 0.18;
+    let y = 0;
+    let velocityY = 0;
+    let facing = 1;
+    let flapFrame = 0;
+    let lastFrameChange = 0;
+    let lastLift = 0;
+    let worldX = 0;
+    let health = 10;
+    let lettersHeld = 0;
+    let deliveredLetters = 0;
+    let deliveries = 0;
+    let difficulty = 1;
+    let bestLetters = Number(localStorage.getItem('sovellaBestDelivered') || 0);
+    let nightNumber = 0;
+    let lastSpawn = 0;
+    let lastHeal = 0;
+    let lastDeliverySpawn = 0;
+    let deliveryTarget = null;
+    let toastTimer = 0;
+    let dead = false;
+    let paused = false;
+    let landing = false;
+    let previousFrameTime = 0;
+    let cycleElapsed = 0;
+    let audioContext = null;
+    const entities = [];
+    const pressed = new Set();
+
+    function unlockAudio() {
+      if (!audioContext) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        audioContext = new AudioContextClass();
+      }
+      if (audioContext.state === 'suspended') audioContext.resume();
+      return audioContext;
+    }
+
+    function playTone(frequency, duration, type = 'sine', delay = 0, endFrequency = frequency) {
+      const audio = unlockAudio();
+      if (!audio) return;
+      const start = audio.currentTime + delay;
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, start);
+      oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, endFrequency), start + duration);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.18, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start(start);
+      oscillator.stop(start + duration + 0.02);
+    }
+
+    function playSound(eventName) {
+      if (eventName === 'collect') {
+        playTone(620, 0.11, 'triangle', 0, 920);
+      } else if (eventName === 'deliver') {
+        playTone(523, 0.16, 'triangle');
+        playTone(659, 0.16, 'triangle', 0.11);
+        playTone(784, 0.24, 'triangle', 0.22);
+      } else if (eventName === 'predator') {
+        playTone(190, 0.3, 'sawtooth', 0, 70);
+      } else if (eventName === 'cloud') {
+        playTone(95, 0.42, 'square', 0, 38);
+        playTone(58, 0.5, 'sawtooth', 0.04, 28);
+      }
+    }
+
+    function updateHud() {
+      healthText.textContent = `${health.toFixed(1).replace('.0', '')} / 10`;
+      healthFill.style.width = `${health * 10}%`;
+      healthFill.style.background = health > 5
+        ? 'linear-gradient(90deg, #43d17b, #b9f35d)'
+        : health > 2.5 ? '#ffc247' : '#ff5a5f';
+      letterCount.textContent = `✉ С собой: ${lettersHeld} · Доставлено: ${deliveredLetters}`;
+      record.textContent = `🏆 Рекорд: ${bestLetters} · Уровень: ${difficulty}`;
+      mission.textContent = deliveryTarget
+        ? 'Цель: мягко сядь на светящуюся площадку'
+        : lettersHeld >= 3 ? 'Цель: башня уже близко' : `Цель: собери ещё ${3 - lettersHeld}`;
+    }
+
+    function say(text) {
+      toast.textContent = text;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    function addEntity(type, xPos, yPos, vx = 0, availableNight = 0) {
+      const node = document.createElement('div');
+      node.className = `entity ${type}`;
+      if (type === 'delivery') {
+        const landingZone = document.createElement('div');
+        landingZone.className = 'landing-zone';
+        node.appendChild(landingZone);
+      }
+      stage.appendChild(node);
+      const entity = { type, x: xPos, y: yPos, vx, vy: 0, availableNight, node };
+      entities.push(entity);
+      drawEntity(entity);
+      return entity;
+    }
+
+    function drawEntity(entity) {
+      entity.node.style.left = `${entity.x * 100}%`;
+      if (entity.type === 'delivery') {
+        entity.node.style.top = 'auto';
+        entity.node.style.bottom = '0';
+        entity.node.style.transform = 'translateX(-50%)';
+      } else {
+        entity.node.style.top = `${entity.y * 100}%`;
+      }
+    }
+
+    function removeEntity(entity) {
+      const index = entities.indexOf(entity);
+      if (index >= 0) entities.splice(index, 1);
+      if (entity === deliveryTarget) deliveryTarget = null;
+      entity.node.remove();
+    }
+
+    function clearEntities(types) {
+      [...entities].forEach(entity => {
+        if (types.includes(entity.type)) removeEntity(entity);
+      });
+    }
+
+    function spawnLetter() {
+      addEntity('letter', 1.06, 0.18 + Math.random() * 0.62, -(0.0034 + difficulty * 0.00016));
+    }
+
+    function spawnPredator() {
+      addEntity('predator', 1.1, 0.16 + Math.random() * 0.66, -(0.0042 + difficulty * 0.00045));
+    }
+
+    function spawnCloud() {
+      addEntity('storm-cloud', 1.12, 0.15 + Math.random() * 0.58, -(0.0025 + difficulty * 0.00032));
+    }
+
+    function spawnDelivery() {
+      deliveryTarget = addEntity('delivery', 1.14, 0, -(0.00135 + difficulty * 0.00011));
+      lastDeliverySpawn = performance.now();
+      updateHud();
+      say('Почтовая башня впереди!');
+    }
+
+    function landOnTower(entity, now) {
+      if (landing || lettersHeld === 0) return;
+      const zone = entity.node.querySelector('.landing-zone');
+      const stageRect = stage.getBoundingClientRect();
+      const zoneRect = zone.getBoundingClientRect();
+      landing = true;
+      entity.vx = 0;
+      pressed.clear();
+      velocityY = 0;
+      y = Math.max(0, Math.min(0.72, (stageRect.bottom - zoneRect.top) / stageRect.height - 0.03));
+      hero.src = 'hero.png';
+      hero.classList.remove('flying');
+      hero.classList.add('landing');
+      updateHero();
+      say('Точная посадка!');
+
+      setTimeout(() => {
+        const deliveredNow = lettersHeld;
+        deliveredLetters += deliveredNow;
+        deliveries += 1;
+        lettersHeld = 0;
+        difficulty = Math.min(10, 1 + Math.floor(deliveredLetters / 5));
+        if (deliveredLetters > bestLetters) {
+          bestLetters = deliveredLetters;
+          localStorage.setItem('sovellaBestDelivered', String(bestLetters));
+        }
+        entity.delivered = true;
+        entity.vx = -(0.00135 + difficulty * 0.00011);
+        entity.node.querySelector('.landing-zone').style.display = 'none';
+        deliveryTarget = null;
+        lastDeliverySpawn = performance.now();
+        playSound('deliver');
+        hero.classList.remove('landing');
+        landing = false;
+        velocityY = 0.007;
+        updateHud();
+        say(`Доставлено писем: ${deliveredNow}!`);
+      }, 800);
+    }
+
+    function dropLetters() {
+      if (lettersHeld === 0) return;
+      const rect = stage.getBoundingClientRect();
+      const heroRect = hero.getBoundingClientRect();
+      const centerX = (heroRect.left + heroRect.width / 2 - rect.left) / rect.width;
+      const centerY = (heroRect.top + heroRect.height / 2 - rect.top) / rect.height;
+      const droppedCount = 1;
+      lettersHeld -= 1;
+      for (let i = 0; i < droppedCount; i += 1) {
+        const dropped = addEntity(
+          'letter dropped',
+          Math.max(.04, Math.min(.96, centerX + (Math.random() - .5) * .12)),
+          Math.max(.1, Math.min(.86, centerY + (Math.random() - .5) * .08)),
+          0,
+          nightNumber + 1
+        );
+        dropped.type = 'dropped';
+        dropped.vy = 0.004 + Math.random() * 0.003;
+      }
+      updateHud();
+      say('Хищник выбил одно письмо');
+    }
+
+    function die() {
+      if (deliveredLetters > bestLetters) {
+        bestLetters = deliveredLetters;
+        localStorage.setItem('sovellaBestDelivered', String(bestLetters));
+        updateHud();
+      }
+      dead = true;
+      pressed.clear();
+      deathScreen.classList.add('show');
+    }
+
+    function strikeLightning() {
+      health = Math.max(0, health - 2.5);
+      lightningFlash.classList.remove('hit');
+      void lightningFlash.offsetWidth;
+      lightningFlash.classList.add('hit');
+      updateHud();
+      if (health === 0) die();
+      else say('Молния! −2,5 здоровья');
+    }
+
+    function intersects(first, second) {
+      return first.left < second.right && first.right > second.left
+        && first.top < second.bottom && first.bottom > second.top;
+    }
+
+    function onPhaseChange(nextPlace) {
+      lastSpawn = 0;
+      lastHeal = performance.now();
+      clearEntities(['letter', 'predator', 'storm-cloud']);
+      if (nextPlace === 1) nightNumber += 1;
+      if (nextPlace === 2) {
+        const fallen = entities.filter(entity => entity.type === 'dropped').length;
+        clearEntities(['dropped']);
+        if (fallen > 0) say(`Гроза испепелила письма: ${fallen}`);
+      }
+      entities.forEach(entity => {
+        if (entity.type === 'dropped') {
+          entity.node.style.display = nextPlace === 1 && entity.availableNight <= nightNumber ? 'block' : 'none';
+        }
+      });
+    }
+
+    function showPlace(nextPlace, immediate = false) {
+      place = nextPlace;
+      placeName.textContent = places[place].name;
+      onPhaseChange(nextPlace);
+      if (immediate) {
+        scenes[0].style.backgroundImage = `url("${places[place].image}")`;
+        scenes[0].classList.add('active');
+        scenes[1].classList.remove('active');
+        activeScene = 0;
+        return;
+      }
+      const incoming = activeScene === 0 ? 1 : 0;
+      scenes[incoming].style.backgroundImage = `url("${places[place].image}")`;
+      requestAnimationFrame(() => {
+        scenes[incoming].classList.add('active');
+        scenes[activeScene].classList.remove('active');
+        activeScene = incoming;
+      });
+    }
+
+    function updateHero() {
+      hero.style.left = `${x * 100}%`;
+      hero.style.bottom = `calc(3% + ${y * 100}%)`;
+      const tilt = y > 0 && velocityY > 0.002 ? -5 : y > 0 ? 4 : 0;
+      hero.style.transform = `scaleX(${facing}) rotate(${tilt * facing}deg)`;
+    }
+
+    function updateParallax() {
+      parallaxLayers[0].style.backgroundPositionX = `${-worldX * 0.16}px`;
+      parallaxLayers[1].style.backgroundPositionX = `${-worldX * 0.43}px`;
+      parallaxLayers[2].style.backgroundPositionX = `${-worldX}px`;
+    }
+
+    function updateGameplay(now) {
+      if (place === 0 && health > 0 && health < 10 && now - lastHeal >= 2000) {
+        health = Math.min(10, health + 1.5);
+        lastHeal = now;
+        updateHud();
+      }
+      const letterDelay = Math.max(1050, 1900 - difficulty * 70);
+      const predatorDelay = Math.max(950, 2100 - difficulty * 120);
+      const cloudDelay = Math.max(1100, 2400 - difficulty * 130);
+      if (place === 0 && now - lastSpawn > letterDelay && entities.filter(e => e.type === 'letter').length < 8) {
+        spawnLetter();
+        lastSpawn = now;
+      }
+      if (place === 1 && now - lastSpawn > predatorDelay) {
+        spawnPredator();
+        lastSpawn = now;
+      }
+      if (place === 2 && now - lastSpawn > cloudDelay) {
+        spawnCloud();
+        lastSpawn = now;
+      }
+      if (lettersHeld >= 3 && !deliveryTarget && now - lastDeliverySpawn > 2200) spawnDelivery();
+
+      const heroRect = hero.getBoundingClientRect();
+      for (const entity of [...entities]) {
+        entity.x += entity.vx;
+        if (entity.type === 'dropped' && entity.y < .88) entity.y = Math.min(.88, entity.y + entity.vy);
+        if (entity.x < -.15) {
+          const missedDelivery = entity.type === 'delivery' && !entity.delivered;
+          removeEntity(entity);
+          if (missedDelivery) {
+            lastDeliverySpawn = now;
+            say('Башня осталась позади — следующая появится скоро');
+            updateHud();
+          }
+          continue;
+        }
+        drawEntity(entity);
+
+        const canCollect = entity.type === 'letter'
+          || (entity.type === 'dropped' && place === 1 && entity.availableNight <= nightNumber);
+        if (entity.node.style.display === 'none') continue;
+        if (entity.type === 'delivery') {
+          if (entity.delivered) continue;
+          const landingZone = entity.node.querySelector('.landing-zone');
+          const gentleDescent = velocityY <= 0.001 && velocityY >= -0.007;
+          if (intersects(heroRect, landingZone.getBoundingClientRect()) && gentleDescent) {
+            landOnTower(entity, now);
+            break;
+          }
+          continue;
+        }
+        if (!intersects(heroRect, entity.node.getBoundingClientRect())) continue;
+
+        if (canCollect) {
+          lettersHeld += 1;
+          removeEntity(entity);
+          playSound('collect');
+          updateHud();
+        } else if (entity.type === 'predator') {
+          playSound('predator');
+          dropLetters();
+          removeEntity(entity);
+        } else if (entity.type === 'storm-cloud') {
+          playSound('cloud');
+          strikeLightning();
+          removeEntity(entity);
+        }
+      }
+    }
+
+    function flap(now) {
+      if (now - lastLift < 170) return;
+      velocityY = Math.min(velocityY + 0.013, 0.021);
+      lastLift = now;
+    }
+
+    addEventListener('keydown', event => {
+      unlockAudio();
+      if (dead && event.key.toLowerCase() === 'r') {
+        location.reload();
+        return;
+      }
+      if (['ArrowUp', 'ArrowDown', ' '].includes(event.key)) {
+        event.preventDefault();
+      }
+      pressed.add(event.key.toLowerCase());
+      if ((event.key === 'ArrowUp' || event.key === ' ') && !event.repeat) flap(performance.now());
+    });
+
+    addEventListener('keyup', event => pressed.delete(event.key.toLowerCase()));
+
+    pauseButton.addEventListener('click', () => {
+      unlockAudio();
+      if (dead) return;
+      paused = !paused;
+      pressed.clear();
+      pauseScreen.classList.toggle('show', paused);
+      pauseButton.textContent = paused ? '▶ Продолжить' : '⏸ Пауза';
+    });
+
+    function frame(now) {
+      const delta = previousFrameTime ? Math.min(50, now - previousFrameTime) : 0;
+      previousFrameTime = now;
+      if (dead || paused || landing) {
+        requestAnimationFrame(frame);
+        return;
+      }
+      cycleElapsed += delta;
+      if (cycleElapsed >= 15000) {
+        cycleElapsed %= 15000;
+        cycleStep = (cycleStep + 1) % dayCycle.length;
+        showPlace(dayCycle[cycleStep]);
+      }
+      if (pressed.has('arrowup') || pressed.has(' ')) flap(now);
+
+      const fastDescent = pressed.has('arrowdown');
+      velocityY -= fastDescent ? 0.0014 : 0.00062;
+      const fallLimit = fastDescent ? -0.012 : -0.0045;
+      if (y > 0 && velocityY < fallLimit) velocityY = fallLimit;
+      y += velocityY;
+      if (y < 0) { y = 0; velocityY = 0; }
+      if (y > 0.72) {
+        y = 0.72;
+        if (velocityY > 0) velocityY = 0;
+      }
+
+      const airborne = y > 0.002;
+      if (airborne) worldX += 1.8;
+      hero.classList.toggle('flying', airborne);
+      if (!airborne) {
+        if (!hero.src.endsWith('/hero.png')) hero.src = 'hero.png';
+      } else if (velocityY < -0.0015 && !pressed.has('arrowup') && !pressed.has(' ')) {
+        if (!hero.src.endsWith('/glide.png')) hero.src = 'glide.png';
+      } else if (now - lastFrameChange > 85) {
+        flapFrame = (flapFrame + 1) % flapFrames.length;
+        hero.src = flapFrames[flapFrame];
+        lastFrameChange = now;
+      }
+
+      updateHero();
+      updateParallax();
+      updateGameplay(now);
+      requestAnimationFrame(frame);
+    }
+
+    showPlace(dayCycle[0], true);
+    updateHero();
+    updateParallax();
+    updateHud();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
